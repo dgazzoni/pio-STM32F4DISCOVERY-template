@@ -147,7 +147,6 @@ def swo_parser_main(out=sys.stdout):
     HOST = "localhost"
     PORT = 6666
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tcl_socket:
-        tcl_socket.settimeout(3)
         retries = 0
         while retries < 100:
             try:
@@ -165,7 +164,6 @@ def swo_parser_main(out=sys.stdout):
             file=out,
             flush=True,
         )
-        tcl_socket.settimeout(0)
 
         # Create a stream manager and add three streams
         streams = StreamManager()

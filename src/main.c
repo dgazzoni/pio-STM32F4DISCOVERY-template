@@ -1,3 +1,5 @@
+#ifndef UNIT_TEST
+
 #include <stdio.h>
 
 #include "stm32f4xx_hal.h"
@@ -20,3 +22,5 @@ int main(void) {
         printf("cycles = %lu\n", bm_result());
     }
 }
+
+#endif  // UNIT_TEST
