@@ -35,10 +35,11 @@ class Stream:
     # Max number of characters for a stream before a newline needs to occur
     MAX_LINE_LENGTH = 1024
 
-    def __init__(self, id, header="", tcl_socket=None):
+    def __init__(self, id, header="", out=sys.stdout, tcl_socket=None):
         self.id = id
         self._buffer = []
         self._header = header
+        self.out = out
         self.tcl_socket = tcl_socket
 
     def add_char(self, c):
@@ -66,7 +67,7 @@ class Stream:
             self.add_char(c)
 
     def _output(self, s):
-        print("[Stream ID %s] %s" % (self.id, s), flush=True)
+        print("[Stream ID %s] %s" % (self.id, s), file=self.out, flush=True)
         return
         # do not print to TCL socket, double output.
         if self.tcl_socket is not None:
@@ -141,25 +142,36 @@ class StreamManager:
 
 
 #### Main program ####
-def swo_parser_main():
+def swo_parser_main(out=sys.stdout):
     # Set up the socket to the OpenOCD Tcl server
     HOST = "localhost"
     PORT = 6666
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tcl_socket:
         tcl_socket.settimeout(3)
-        time.sleep(1)
-        tcl_socket.connect((HOST, PORT))
+        retries = 0
+        while retries < 100:
+            try:
+                tcl_socket.connect((HOST, PORT))
+            except socket.error:
+                retries += 1
+                time.sleep(0.1)
+                tcl_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                continue
+            else:
+                break
+
         print(
             "SWO client successfully connected to OpenOCD on %s:%d" % (HOST, PORT),
+            file=out,
             flush=True,
         )
         tcl_socket.settimeout(0)
 
         # Create a stream manager and add three streams
         streams = StreamManager()
-        streams.add_stream(Stream(0, "", tcl_socket))
-        streams.add_stream(Stream(1, "WARNING: "))
-        streams.add_stream(Stream(2, "ERROR: ", tcl_socket))
+        streams.add_stream(Stream(0, "", out, tcl_socket))
+        streams.add_stream(Stream(1, "WARNING: ", out))
+        streams.add_stream(Stream(2, "ERROR: ", out, tcl_socket))
 
         # Enable the tcl_trace output
         tcl_socket.sendall(b"tcl_trace on\n\x1a")
@@ -196,7 +208,9 @@ def swo_parser_main():
                     temp = tcl_buf.split(b"\x1a", 1)
         except KeyboardInterrupt:
             time.sleep(0.1)
-            print("==== Terminating SWO / TCL client program ====", flush=True)
+            print(
+                "==== Terminating SWO / TCL client program ====", file=out, flush=True
+            )
             time.sleep(0.2)
             # Turn off the trace data before closing the port
             # XXX: There currently isn't a way for the code to actually reach this line
