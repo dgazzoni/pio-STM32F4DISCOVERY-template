@@ -1,5 +1,5 @@
 This is a template project for the STM32F4DISCOVERY board using PlatformIO,
-with some built-in helper functions to use printf() using SWO and for
+with some built-in helper functions to have printf() output over SWO and for
 measuring cycle counts. The clock is initialized at 24 MHz and the ART
 accelerator is disabled to achieve deterministic execution times.
 
@@ -10,6 +10,10 @@ https://github.com/stlink-org/stlink instead by running the following
 command:
 
 `st-trace -c24`
+
+A custom test runner reading data over SWO allows for the use of PlatformIO's
+built-in unit testing facilities. Example usage is provided in the tests/
+directory.
 
 # Example usage for cycle count measurement
 
