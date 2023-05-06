@@ -36,6 +36,9 @@ if __name__ == "__main__":
         flush=True,
     )
     print(server_args)
+    # start openocd and client processes in parallel
+    openocd_process = Popen(server_args)
+
     # start client process in parallel
     (swo_parser_r_fd, swo_parser_w_fd) = pipe()
     swo_parser_r = open(swo_parser_r_fd, "r")
@@ -45,16 +48,14 @@ if __name__ == "__main__":
     swo_parser_t.daemon = True
     swo_parser_t.start()
 
-    # start openocd process parallel but wait in-line
-    openocd_process = Popen(server_args)
-    timeout = int(argv[3])
-    tests_done = False
-
     # https://stackoverflow.com/a/4896288/523079
     q = Queue()
     enqueue_output_t = Thread(target=enqueue_output, args=(swo_parser_r, q))
     enqueue_output_t.daemon = True
     enqueue_output_t.start()
+
+    timeout = int(argv[3])
+    tests_done = False
 
     while True:
         try:
