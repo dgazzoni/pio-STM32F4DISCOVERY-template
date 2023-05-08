@@ -66,9 +66,11 @@ if __name__ == "__main__":
         if match(r".*[0-9]* Tests [0-9]* Failures [0-9]* Ignored.*", line):
             tests_done = True
             stdout.write(line)
+            stdout.flush()
             continue
         else:
             stdout.write(line)
+            stdout.flush()
 
         if tests_done:
             break

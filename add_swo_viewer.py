@@ -63,7 +63,6 @@ def swo_viewer_task(*args, **kwargs):
     openocd_process = subprocess.Popen(server_args)
     openocd_process.communicate()
     print("Exited from TCL client")
-    sys.exc_clear()
 
 
 env.AddCustomTarget(

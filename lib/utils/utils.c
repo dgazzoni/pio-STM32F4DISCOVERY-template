@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include <errno.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include "stm32f4xx_hal.h"
@@ -39,7 +40,45 @@ void LED_toggle(void) {
     HAL_GPIO_TogglePin(LED_GPIO_PORT, LED_PIN);
 }
 
+volatile uint32_t stack_usage_sample_current = 0, stack_usage_sample_max = 0;
+extern uint32_t _estack;
+uint32_t *stack_usage_scan_start = 0;
+
+void stack_usage_scan_init(uint32_t max_stack_size) {
+    uint32_t *start, *end;
+
+    stack_usage_scan_start = &_estack - max_stack_size / sizeof(uint32_t);
+
+    start = stack_usage_scan_start;
+    end = (uint32_t *)__get_MSP() - 1;
+
+    while (start < end) {
+        *start++ = 0xDEADBEEF;
+    }
+}
+
+uint32_t stack_usage_scan(void) {
+    if (stack_usage_scan_start == 0) {
+        return 0;
+    }
+
+    uint32_t *p = stack_usage_scan_start;
+    while (*p == 0xDEADBEEF) {
+        p++;
+    }
+
+    return (&_estack - p) * sizeof(uint32_t);
+}
+
+void stack_usage_sample(void) {
+    stack_usage_sample_current = (uint32_t)&_estack - __get_MSP();
+    if (stack_usage_sample_current > stack_usage_sample_max) {
+        stack_usage_sample_max = stack_usage_sample_current;
+    }
+}
+
 void SysTick_Handler(void) {
+    stack_usage_sample();
     HAL_IncTick();
 }
 
