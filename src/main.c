@@ -13,7 +13,7 @@ int main(void) {
     utils_init();
 
     while (1) {
-        printf("stack_usage sample_last = %lu sample_max = %lu scan = %lu\n", stack_usage_sample_get_last(),
+        printf("stack_usage sample_last = %u sample_max = %u scan = %u\n", stack_usage_sample_get_last(),
                stack_usage_sample_get_max(), stack_usage_scan());
 
         __disable_irq();
@@ -26,7 +26,7 @@ int main(void) {
 
         HAL_Delay(1000);
 
-        printf("cycles = %lu\n", bm_result());
+        printf("cycles = %u\n", bm_result());
     }
 }
 
