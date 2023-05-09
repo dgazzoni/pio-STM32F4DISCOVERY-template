@@ -1,19 +1,26 @@
 This is a template project for the STM32F4DISCOVERY board using PlatformIO,
-with some built-in helper functions to have printf() output over SWO and for
-measuring cycle counts. The clock is initialized at 24 MHz and the ART
+with some built-in helper functions to have printf() output over SWO, cycle
+count measurement, stack usage moniroting, and an option to use the clang
+compiler instead of gcc. The clock is initialized at 24 MHz and the ART
 accelerator is disabled to achieve deterministic execution times.
 
-It heavily borrows from https://github.com/maxgerhardt/pio-swo-demo,
-including its custom SWO viewer target to monitor output directly from
-within Visual Studio Code. One can also use `st-trace` from
-https://github.com/stlink-org/stlink instead by running the following
-command:
+Modifications required for SWO to work heavily borrow from
+https://github.com/maxgerhardt/pio-swo-demo, including its custom SWO viewer
+target to monitor output directly from within Visual Studio Code. One can also
+use `st-trace` from https://github.com/stlink-org/stlink instead by running
+the following command:
 
 `st-trace -c24`
 
 A custom test runner reading data over SWO allows for the use of PlatformIO's
 built-in unit testing facilities. Example usage is provided in the tests/
 directory.
+
+Modifications required to use clang as a compiler heavily borrow from
+https://github.com/maxgerhardt/platformio-with-clang/. However, clang is
+not supplied by PlatformIO, so it will be necessary to package your own
+version. Instructions to do this are supplied in section
+[Packaging clang](#packaging-clang)
 
 # Stack usage monitoring
 
@@ -62,7 +69,7 @@ project (i.e. the directory containing the `platformio.ini` file):
 ```
 puncover \
     --gcc_tools_base ~/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi- \
-    --elf-file .pio/build/disco_f407vg/firmware.elf \
+    --elf-file .pio/build/disco_f407vg_gcc/firmware.elf \
     --build_dir .pio/build \
     --src_root .
 ```
@@ -71,10 +78,15 @@ This creates a local web server, and opens it in your system's default web
 browser, presenting a graphical user interface for code size and stack usage
 analysis.
 
-For all the reporting features of this tool to work, it requires that the
-binary is compiled with certain flags: `-fstack-usage -fcallgraph-info -g`.
-These are already included in the template project (in the `platformio.ini`
-file).
+**Note:** if using clang instead of gcc, replace the firmware location passed
+to the `--elf-file` option with `.pio/build/disco_f407vg_clang/firmware.elf`.
+
+For all the reporting features of this tool to work, it requires compiling the
+binary with certain flags: `-fstack-usage -fcallgraph-info -g`. These are
+already included in the template project (in the `platformio.ini` file) for
+gcc. For clang, the flag `-fcallgraph-info` is not available and thus is not
+included. Although this should prevent worst case stack usages from being
+reported by puncover, this was not observed in practice.
 
 However, note that some users have reported inconsistencies and errors in
 puncover's output, so keep this in mind, and if possible confirm the reported
@@ -98,3 +110,100 @@ reenable them after `bm_end()` using `__enable_irq()`. Obviously, this may
 break code that depends on interrupts.
 
 Example code is shown in the `main()` function of this template.
+
+# Packaging clang
+
+The following steps are required to create a clang package:
+
+1. Download the desired release from
+https://github.com/ARM-software/LLVM-embedded-toolchain-for-Arm/releases/.
+2. Unpack the file somewhere in your filesystem; for demonstration we will
+assume `/Users/xxx/clang`.
+3. After unpacking, a new directory should be created inside
+`/Users/xxx/clang` with the same name as the downloaded file, but without the
+`.tar.gz` extension. For instance, considering the most recent release as of
+this writing (16.0.0), this would be:
+
+`/Users/xxx/clang/LLVMEmbeddedToolchainForArm-16.0.0-Darwin`
+
+4. Move the contents of this directory (i.e. the `bin`, `lib` and other
+files and directories) to `/Users/xxx/clang`.
+5. Delete the `/Users/xxx/clang/LLVMEmbeddedToolchainForArm-16.0.0-Darwin`
+directory:
+
+`rmdir /Users/xxx/clang/LLVMEmbeddedToolchainForArm-16.0.0-Darwin`
+
+6. Create the required `package.json` file in `/Users/xxx/clang/` with the
+following contents:
+
+```
+{
+  "name": "toolchain-clang",
+  "version": "1.160000.230413",
+  "description": "LLVM/Clang toolchain",
+  "keywords": [
+    "toolchain",
+    "build tools",
+    "compiler",
+    "assembler",
+    "linker",
+    "preprocessor",
+    "arm"
+  ],
+  "homepage": "https://github.com/llvm/llvm-project",
+  "license": "Apache-2.0",
+  "system": [
+    "darwin_x86_64"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/llvm/llvm-project.git"
+  }
+}
+```
+
+7. If necessary, change the `version` and `system` fields of `package.json`.
+If the downloaded clang release has version `aa.b.c` and was released on
+`yy/mm/dd`, use the following version string:
+
+```
+"version": "1.aa0b0c.yymmdd",
+```
+
+8. Similarly, if you use a different system, edit the `system` field. The
+following appear to be the valid strings for the most common systems:
+
+```
+darwin_x86_64
+darwin_arm64
+linux_x86_64
+windows_amd64
+```
+
+9. Pack the toolchain using the following commands (replacing the version
+and system strings in the file name if necessary):
+
+```
+cd /Users/xxx/clang
+tar zcvf toolchain-clang-darwin_x86_64-1.160000.230413.tar.gz *
+```
+
+10. Save the `toolchain-clang-darwin_x86_64-1.160000.230413.tar.gz` to a
+directory of your choice. It is now possible to delete the files originally
+inside `/Users/xxx/clang/` to save space. For the following, it will be
+assumed that this was done if desired, and the packaged file was copied back
+to `/Users/xxx/clang/`.
+
+11. Edit `platformio.ini` and locate, inside the `[env:disco_f407vg_clang]`
+section, the line that references `toolchain-clang`:
+
+```
+platform_packages = 
+    toolchain-clang@file://...
+```
+
+12. Replace it with:
+
+```
+platform_packages = 
+    toolchain-clang@file:///Users/xxx/clang/toolchain-clang-darwin_x86_64-1.160000.230413.tar.gz
