@@ -1,5 +1,6 @@
 #ifndef UNIT_TEST
 
+#include <inttypes.h>
 #include <stdio.h>
 
 #include "stm32f4xx_hal.h"
@@ -13,8 +14,8 @@ int main(void) {
     utils_init();
 
     while (1) {
-        printf("stack_usage sample_last = %lu sample_max = %lu scan = %lu\n", stack_usage_sample_get_last(),
-               stack_usage_sample_get_max(), stack_usage_scan());
+        printf("stack_usage sample_last = %" PRIu32 " sample_max = %" PRIu32 " scan = %" PRIu32 "\n",
+               stack_usage_sample_get_last(), stack_usage_sample_get_max(), stack_usage_scan());
 
         __disable_irq();
         bm_start();
@@ -26,7 +27,7 @@ int main(void) {
 
         HAL_Delay(1000);
 
-        printf("cycles = %lu\n", bm_result());
+        printf("cycles = %" PRIu32 "\n", bm_result());
     }
 }
 
