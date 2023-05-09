@@ -85,8 +85,8 @@ For all the reporting features of this tool to work, it requires compiling the
 binary with certain flags: `-fstack-usage -fcallgraph-info -g`. These are
 already included in the template project (in the `platformio.ini` file) for
 gcc. For clang, the flag `-fcallgraph-info` is not available and thus is not
-included. Although this should prevent worst case stack usages from being
-reported by puncover, this was not observed in practice.
+included. Currently stack usage is not being reported when the project is
+compiled with clang, but code size and static memory usage reports work.
 
 However, note that some users have reported inconsistencies and errors in
 puncover's output, so keep this in mind, and if possible confirm the reported
