@@ -2,10 +2,29 @@
 
 #include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "stm32f4xx_hal.h"
 
+#ifdef __clang__
+static int ITM_putc(char c, FILE *file) {
+    (void)file;      /* Not used in this function */
+    ITM_SendChar(c); /* Defined by underlying system */
+    return c;
+}
+
+static int null_getc(FILE *file) {
+    (void)file; /* Not used in this function */
+    return 0;
+}
+
+static FILE __stdio = FDEV_SETUP_STREAM(ITM_putc, null_getc, NULL, _FDEV_SETUP_RW);
+
+FILE *const stdin = &__stdio;
+__strong_reference(stdin, stdout);
+__strong_reference(stdin, stderr);
+#else
 int _write(int file, char *data, int len) {
     if ((file != STDOUT_FILENO) && (file != STDERR_FILENO)) {
         errno = EBADF;
@@ -18,6 +37,7 @@ int _write(int file, char *data, int len) {
 
     return len;
 }
+#endif
 
 static void BM_Init(void) {
     // Enable TRCENA
