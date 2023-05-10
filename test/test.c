@@ -13,7 +13,7 @@ void tearDown(void) {
 
 void callback_1ms(void) {
     if (HAL_GetTick() % 512 == 0) {
-        LED_Toggle();
+        LED_toggle();
     }
 }
 
@@ -27,6 +27,8 @@ void failing_test(void) {
 
 int main(int argc, char **argv) {
     utils_init();
+
+    HAL_Delay(200);
 
     UNITY_BEGIN();
     RUN_TEST(passing_test);
