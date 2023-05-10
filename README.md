@@ -22,6 +22,32 @@ not supplied by PlatformIO, so it will be necessary to package your own
 version. Instructions to do this are supplied in section
 [Packaging clang](#packaging-clang)
 
+# Periodic callback function
+
+It is possible to declare a callback function that runs every 1 ms, in the
+context of the SysTick IRQ handler. Its function prototype is:
+
+```
+void callback_1ms(void)
+```
+
+As it runs in an IRQ context, it should not perform any complex tasks which
+take up too much CPU time.
+
+## Default LED behavior while running unit tests
+
+An example application of this callback is shown in `test/test.c`, where it is
+used to blink one of the board's LEDs with ~1 Hz frequency. This is useful to
+detect a hard fault while running tests; since the LED blinking code runs in
+an IRQ context, it will keep blinking even if the user code is trapped in an
+infinite loop. However, in case of a hard fault, its IRQ handler is called and
+it cannot be preempted by the SysTick handler; thus, the LED stops blinking,
+in the *on* or *off* state randomly depending on the exact instant the fault
+occurred.
+
+**To summarize:** blinking LEDs indicate a regular user code fault, while a
+static LED (whether on or off) indicates a hard fault.
+
 # Stack usage monitoring
 
 Two facilities are provided to monitor maximum stack usage for the program.

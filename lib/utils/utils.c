@@ -97,7 +97,11 @@ void stack_usage_sample(void) {
     }
 }
 
+__attribute__((weak)) void callback_1ms(void) {
+}
+
 void SysTick_Handler(void) {
+    callback_1ms();
     stack_usage_sample();
     HAL_IncTick();
 }

@@ -1,5 +1,6 @@
 #include <unity.h>
 
+#include "stm32f4xx_hal.h"
 #include "utils.h"
 
 void setUp(void) {
@@ -8,6 +9,12 @@ void setUp(void) {
 
 void tearDown(void) {
     // clean stuff up here
+}
+
+void callback_1ms(void) {
+    if (HAL_GetTick() % 512 == 0) {
+        LED_Toggle();
+    }
 }
 
 void passing_test(void) {
@@ -25,4 +32,7 @@ int main(int argc, char **argv) {
     RUN_TEST(passing_test);
     RUN_TEST(failing_test);
     UNITY_END();
+
+    while (1) {
+    }
 }
