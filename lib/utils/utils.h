@@ -20,3 +20,5 @@ extern volatile uint32_t stack_usage_sample_current, stack_usage_sample_max;
 
 #define stack_usage_sample_get_last() stack_usage_sample_current
 #define stack_usage_sample_get_max() stack_usage_sample_max
+
+#define FIX_RAM_FUNC(func) typeof(func) *func##_fixed = (typeof(func) *)((uint32_t)func & 0xDFFFFFFF)

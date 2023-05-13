@@ -73,3 +73,5 @@ env.AddCustomTarget(
     description="Starts viewing the SWO output",
     always_build=True,
 )
+
+env.AddPostAction("upload", swo_viewer_task)

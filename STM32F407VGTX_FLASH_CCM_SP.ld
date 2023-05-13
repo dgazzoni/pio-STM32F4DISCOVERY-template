@@ -49,7 +49,7 @@ MEMORY
 }
 
 /* Highest address of the user mode stack */
-_estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */
+_estack = ORIGIN(CCMRAM) + LENGTH(CCMRAM); /* end of "CCMRAM" Ram type memory */
 
 /* Sections */
 SECTIONS

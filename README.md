@@ -1,8 +1,12 @@
 This is a template project for the STM32F4DISCOVERY board using PlatformIO,
 with some built-in helper functions to have printf() output over SWO, cycle
-count measurement, stack usage moniroting, and an option to use the clang
-compiler instead of gcc. The clock is initialized at 24 MHz and the ART
-accelerator is disabled to achieve deterministic execution times.
+count measurement, stack usage monitoring, an option to use the clang compiler
+instead of gcc, as well as more esoteric features for performance
+investigation (see Sections [Running code from RAM](#running-code-from-ram)
+and [Stack pointer in CCM RAM](#stack-pointer-in-ccm-ram)).
+
+The clock is initialized at 24 MHz and the ART accelerator is disabled to
+reduce variability of execution times.
 
 Modifications required for SWO to work heavily borrow from
 https://github.com/maxgerhardt/pio-swo-demo, including its custom SWO viewer
@@ -136,6 +140,69 @@ reenable them after `bm_end()` using `__enable_irq()`. Obviously, this may
 break code that depends on interrupts.
 
 Example code is shown in the `main()` function of this template.
+
+# Running code from RAM
+
+For benchmarking reasons, it may be desirable to run certain functions from
+RAM instead of Flash memory. gcc's `__attribute__((section("...")))` syntax
+can be used to achieve this; the linker script defines a `.RamFunc` section
+specifically for this. This is an example syntax of a function declaration:
+
+```
+__attribute__((section(".RamFunc"))) void f(void) {
+    // ...
+}
+```
+
+In assembly, this can be done by the replacing `.text` with `.RamFunc` in the
+`.section` directive preceding the function.
+
+However, due to certain particularities of the STM32F4, to achieve maximum
+execution performance with code in RAM, bit 30 of the address of the function
+pointer (whether written in C or assembly) must be cleared. A utility macro is
+provided for this in `utils.h`, called `FIX_RAM_FUNC()`. It has a single
+parameter, which is the name of the function whose address must be fixed. The
+macro must be placed inside a function -- it is not possible to declare it in
+the global scope. The effect of this macro is to create a function pointer to
+the same function, with the same name but with the suffix `_fixed` appended to
+it. For maximum performance, calls to the function should be made via this function pointer rather than directly using the original function name.
+
+The following example should make this clearer:
+
+```
+__attribute__((section(".RamFunc"))) void f(void) {
+    // ...
+}
+
+int main() {
+    // ...
+    
+    FIX_RAM_FUNC(f);
+
+    __disable_irq();
+    bm_start();
+
+    f_fixed();
+
+    bm_end();
+    __enable_irq();
+
+    // ...
+}
+```
+# Stack pointer in CCM RAM
+
+Investigations revealed that code may run faster in the STM32F4 if the stack
+pointer points to an address in CCM (core-coupled memory) RAM, which starts
+at address `0x10000000` -- conventionally the stack pointer points to SRAM,
+which starts at address `0x20000000`.
+
+For this scenario, PlatformIO environments are supplied with the `_CCM_SP`
+suffix, i.e. `disco_f407vg_gcc_CCM_SP` and `disco_f407vg_clang_CCM_SP`. By
+selecting this environment when building and uploading the project, the stack
+pointer will automatically point to CCM RAM. Environment names without the
+`_CCM_SP` suffix performs the more conventional initialization pointing to
+SRAM.
 
 # Packaging clang
 

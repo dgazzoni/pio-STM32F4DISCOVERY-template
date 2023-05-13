@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "stm32f4xx_hal.h"
@@ -121,7 +122,7 @@ void SystemClock_Config(void) {
     // Enable HSE Oscillator and activate PLL with HSE as source
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;      // External 8 MHz xtal on OSC_IN/OSC_OUT
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;  // 8 MHz / 8 * 336 / 2 = 168 MHz
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;  // 8 MHz / 8 * 192 / 8 = 24 MHz
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
     RCC_OscInitStruct.PLL.PLLM = 8;              // VCO input clock = 1 MHz / PLLM = 1 MHz
     RCC_OscInitStruct.PLL.PLLN = 192;            // VCO output clock = VCO input clock * PLLN = 192 MHz
@@ -148,6 +149,14 @@ void utils_init(void) {
     HAL_Init();
 
     SystemClock_Config();
+
+    memcpy((void *)0x20000000, (void *)0x08000000, 98 * 4);
+
+    __HAL_RCC_SYSCFG_CLK_ENABLE();
+
+    __disable_irq();
+    __HAL_SYSCFG_REMAPMEMORY_SRAM();
+    __enable_irq();
 
     BM_Init();
     LED_Init();
