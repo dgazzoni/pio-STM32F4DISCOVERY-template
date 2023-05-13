@@ -158,7 +158,7 @@ In assembly, this can be done by the replacing `.text` with `.RamFunc` in the
 `.section` directive preceding the function.
 
 However, due to certain particularities of the STM32F4, to achieve maximum
-execution performance with code in RAM, bit 30 of the address of the function
+execution performance with code in RAM, bit 29 of the address of the function
 pointer (whether written in C or assembly) must be cleared. A utility macro is
 provided for this in `utils.h`, called `FIX_RAM_FUNC()`. It has a single
 parameter, which is the name of the function whose address must be fixed. The
@@ -192,7 +192,7 @@ int main() {
 }
 ```
 
-It turns out that bit 30 is already clear in the Flash memory region, so it is
+It turns out that bit 29 is already clear in the Flash memory region, so it is
 harmless to apply this macro to code placed in Flash memory. Therefore, if
 desired, the macro can be applied indistinctly to any function being
 benchmarked, regardless of whether it is actually placed in RAM. Note that the
