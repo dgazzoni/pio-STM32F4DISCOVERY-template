@@ -165,7 +165,8 @@ parameter, which is the name of the function whose address must be fixed. The
 macro must be placed inside a function -- it is not possible to declare it in
 the global scope. The effect of this macro is to create a function pointer to
 the same function, with the same name but with the suffix `_fixed` appended to
-it. For maximum performance, calls to the function should be made via this function pointer rather than directly using the original function name.
+it. For maximum performance, calls to the function should be made via this
+function pointer rather than directly using the original function name.
 
 The following example should make this clearer:
 
@@ -190,6 +191,14 @@ int main() {
     // ...
 }
 ```
+
+It turns out that bit 30 is already clear in the Flash memory region, so it is
+harmless to apply this macro to code placed in Flash memory. Therefore, if
+desired, the macro can be applied indistinctly to any function being
+benchmarked, regardless of whether it is actually placed in RAM. Note that the
+macro itself does not influence whether a function is placed in Flash or RAM;
+this is done by placing the function in a special section as explained above.
+
 # Stack pointer in CCM RAM
 
 Investigations revealed that code may run faster in the STM32F4 if the stack
