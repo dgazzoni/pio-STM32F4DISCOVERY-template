@@ -26,6 +26,22 @@ not supplied by PlatformIO, so it will be necessary to package your own
 version. Instructions to do this are supplied in section
 [Packaging clang](#packaging-clang)
 
+# Board selection
+
+Beyond the STM32F4DISCOVERY board, this kit is also compatible with the
+STM32F411E-DISCO and STM32F412G-DISCO boards. However, note the MCUs used in
+these boards do not have CCMRAM.
+
+In order to use one of these boards in place of the STM32F4DISCOVERY, rename
+the `platformio.ini` file in the root of this project to
+`platformio_disco_f407vg.ini`, and rename either `platformio_disco_f411ve.ini`
+(for the STM32F411E-DISCO board) or `platformio_disco_f412zg.ini` (for the
+STM32F412G-DISCO board) to `platformio.ini`.
+
+Initial support for the STM32F469I-DISCO board was added, however SWO isn't
+working (no output). Thus, for the moment, this board is considered
+unsupported.
+
 # Periodic callback function
 
 It is possible to declare a callback function that runs every 1 ms, in the

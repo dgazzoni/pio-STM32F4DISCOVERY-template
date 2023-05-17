@@ -2,9 +2,21 @@
 
 #include "stm32f4xx_hal.h"
 
+#if defined(STM32F469xx)
+#define LED_PIN GPIO_PIN_4
+#elif defined(STM32F412Zx)
+#define LED_PIN GPIO_PIN_3
+#else
 #define LED_PIN GPIO_PIN_12
+#endif
+
+#if defined(STM32F412Zx)
+#define LED_GPIO_PORT GPIOE
+#define LED_GPIO_CLK_ENABLE() __HAL_RCC_GPIOE_CLK_ENABLE()
+#else
 #define LED_GPIO_PORT GPIOD
 #define LED_GPIO_CLK_ENABLE() __HAL_RCC_GPIOD_CLK_ENABLE()
+#endif
 
 void utils_init(void);
 void LED_toggle(void);
